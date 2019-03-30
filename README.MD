@@ -52,7 +52,13 @@ directory.
 The example code comprises of a SUT (Software Under Testing), and a few
 test cases for that. The SUT is a very simple HTTP API stub.
 
-First, run the SUT (Software Under testing) in one terminal:
+To run the SUT, you will need to have Python "flask" module installed.
+Flask is a REST API framework for Python. Use the following command to
+install it:
+
+`sudo -H pip3 install flask`
+
+Run the SUT (Software Under testing) in one terminal:
 
 `./gameserver.py`
 
@@ -65,6 +71,12 @@ to generate report.html and log.html from the generated output.xml.
 
 If all goes well, you can use your favorite browser to open the report
 and/or log documents.
+
+About the sample tests:
+  - testgameserver.py has a few simple test cases testing the actual
+    gameserver SUT.
+  - math.py is an example that illustrates how easy it can be to write
+    tests with pytest and pytest-tracerobot at the minimum.
 
 ## Writing test suites, test cases and keywords
 

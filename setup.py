@@ -9,5 +9,5 @@ setup(
     entry_points={"pytest11": ["name_of_plugin=pytest_tracerobot"]},
     # custom PyPI classifier for pytest plugins
     classifiers=["Framework :: Pytest"],
-    install_requires=["tracerobot"]
+    install_requires=["tracerobot >= 0.1.0", "pytest >= 4.3.0"]
 )
