@@ -5,7 +5,7 @@ import pytest
 @keyword
 def rlog(msg):
     print(msg)
-    pass
+
 
 class GameServerTester(KeywordClass):
     """ Game Server Acceptance Tests """
@@ -14,7 +14,6 @@ class GameServerTester(KeywordClass):
         self._url = url
 
     class Login(KeywordClass):
-
         def __init__(self, url, user, passw):
             self._url = url
             self._user = user
@@ -59,8 +58,10 @@ def testFixture2():
 def test_nop():
     rlog("nop!")
 
+@pytest.mark.credentials
 def test_empty_creds(testGameServerFixture, testFixture1):
     assert not testGameServerFixture.try_login(user="", passw="")
 
+@pytest.mark.credentials
 def test_valid_creds(testGameServerFixture, testFixture2):
     assert testGameServerFixture.try_login(user="markku", passw="3l1t3")
