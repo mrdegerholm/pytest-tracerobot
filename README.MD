@@ -1,4 +1,4 @@
-# TraceRobot pluginfor PyTest
+# TraceRobot plugin for PyTest
 
 ## What is it?
 
@@ -59,11 +59,11 @@ install it:
 `sudo -H pip3 install flask`
 
 Run the SUT (Software Under testing) in one terminal:
-
+`cd example`
 `./gameserver.py`
 
 Then, open an another terminal for running the tests:
-
+`cd example`
 `./run.sh`
 
 This script runs both the tests and calls 'rebot' tool from Robot framework
@@ -85,8 +85,14 @@ basic concepts:
   1 Suite: a collection of tests. There can be one or multiple suites per test run,
     and suites can be nested.
     Suites can have setup and teardown related keywords.
+    In pytest-tracerobot, suite-level setup/teardown can be implemented using
+    one or more class/module/session-scoped fixture functions
+    (refer to PyTest documentation for more information).
   1 Test case: a single test case. Test cases cannot be nested.
     Test cases can have setup and teardown related keywords.
+    In pytest-tracerobot, test-level setup/teardown can be implemented using
+    one or more function-scoped fixture functions
+    (refer to PyTest documentation for more information).
   1 Keyword: basically any Python function used by a test case. Keywords can
     call other keywords.
 
@@ -101,14 +107,25 @@ automatically. To instrument the keywords, you will need to:
     automatically instrument all public methods in that class to be keywords.
 
 
-## What is missing
+## Marks / Tags
 
-There are some concepts in PyPi that are not directly transferable to
-Robot Framework logs and vice versa. (TBD)
+In PyTest, each test can be decorated using
+`pytest.mark.MARK` where MARK can be freely chosen. Then, when running tests,
+you can select to run only tests with specific mark(s) using "-m MARK"
+command line option (on command line MARK is actually a regexp so this is quite
+flexible).
+
+In Robot Framework output, marks are converted to tags.
+
+## Docstrings
+
+Python docstrings for test and keyword functions get logged within Robot log
+as documentation for those tets/keywords.
 
 ## Acknowledgements
 
-Specials thanks go to Mica Nyholm and Ossi Rajuvaara for feedback and ideas!
+Specials thanks go to Ossi Rajuvaara and Mica Nyholm for contributing,
+feedback and ideas.
 
 I'm also thankful to Robot Framework and PyTest community for producing such
 high-quality open-source products.
