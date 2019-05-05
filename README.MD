@@ -64,7 +64,7 @@ Run the SUT (Software Under testing) in one terminal:
 
 Then, open an another terminal for running the tests:
 `cd example`
-`./run.sh`
+`./run.sh test*.py`
 
 This script runs both the tests and calls 'rebot' tool from Robot framework
 to generate report.html and log.html from the generated output.xml.
