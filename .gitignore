@@ -4,6 +4,6 @@ tracerobot.egg-info
 __pycache__
 *~
 output.xml
-output.html
+log.html
 report.html
 *.egg-info

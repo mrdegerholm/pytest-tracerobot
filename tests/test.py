@@ -2,14 +2,19 @@ from tracerobot.decorators import keyword, KeywordClass
 import requests
 import pytest
 
-@keyword
 def rlog(msg):
     """ A dummy function that injects msg into trace log """
+    #print(msg)
     pass
 
-@keyword
+def calc_sum(a,b):
+    return a+b
+
 def check_sum(a,b,result):
     assert a + b == result
+
+def fails():
+    raise AssertionError()
 
 @pytest.fixture
 def fixtureWithSetup():
@@ -43,55 +48,73 @@ def fixtureWithTeardownError():
     yield
     assert False
 
-
 @pytest.fixture
 def testFixture2():
     rlog("setup2")
     yield
     rlog("teardown2")
 
-@pytest.mark.critical
+@pytest.mark.passing
 def test_passing_test():
     """ A simple passing test """
-    check_sum(1,2,3)
+    sum = calc_sum(1,2)
+    check_sum(1,2,sum)
 
-@pytest.mark.critical
+@pytest.mark.failing
 def test_direct_assert():
     """ A test that fails with inlined assertion error """
     rlog("here!")
     raise AssertionError("foo")
 
-@pytest.mark.critical
+@pytest.mark.failing
 def test_keyword_assert():
     """ A test that fails within keyword """
     check_sum(1,2,4)
 
-@pytest.mark.critical
+@pytest.mark.passing
 def test_fixture_setup(fixtureWithSetup):
     """ A test with a fixture with a setup """
     rlog("here")
 
-@pytest.mark.critical
+@pytest.mark.passing
 def test_fixture_setup_and_teardown(fixtureWithSetupAndTeardown1):
     """ A test with passing fixture setup and teardown """
     rlog("here")
 
-@pytest.mark.critical
+@pytest.mark.passing
 def test_two_fixtures(fixtureWithSetupAndTeardown1, fixtureWithSetupAndTeardown2):
     """ A test with two function-scoped fixtures """
     rlog("here")
 
-@pytest.mark.critical
+@pytest.mark.passing
 def test_module_and_test_fixtures(moduleFixture, fixtureWithSetupAndTeardown1):
     """ A test with one module-scoped and one function-scoped fixture """
     rlog("here")
 
-@pytest.mark.critical
+@pytest.mark.failing
 def test_setup_assert(fixtureWithSetupError):
     """ A test that fails in fixture setup phase """
     rlog("here")
 
-@pytest.mark.critical
+@pytest.mark.failing
+def test_assert_in_test_body(fixtureWithSetupAndTeardown1):
+    """ A test that fails in test body """
+    rlog("here")
+    assert False
+
+@pytest.mark.failing
+def test_assert_in_test_body_indirect(fixtureWithSetupAndTeardown1):
+    """ A test that fails in a function called by test body"""
+    rlog("here")
+    fails()
+
+@pytest.mark.failing
 def test_teardown_assert(fixtureWithTeardownError):
     """ A test that fails in fixture teardown phase """
     rlog("here")
+
+@pytest.mark.failing
+def test_assert_in_test_body_and_teardown(fixtureWithTeardownError):
+    """ A test that fails in fixture setup and teardown phase """
+    rlog("here")
+    check_sum(1,2,4)
