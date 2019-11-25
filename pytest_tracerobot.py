@@ -1,6 +1,7 @@
 import os
 import traceback
 import tracerobot
+import logging
 import pytest
 
 # Set to True to enable trace log of some hook calls to stdout
@@ -14,12 +15,28 @@ def common_items(iter1, iter2):
         common.append(first)
     return common
 
+class TraceRobotPythonLogger(logging.Handler):
+
+    LOG_LEVELS = {
+        logging.CRITICAL:   "CRITICAL",
+        logging.ERROR:      "ERROR",
+        logging.WARNING:    "WARNING",
+        logging.INFO:       "INFO",
+        logging.DEBUG:      "DEBUG"
+    }
+
+    def __init__(self):
+        super(TraceRobotPythonLogger, self).__init__()
+
+    def handle(self, record):
+        tracerobot.log_message(record.getMessage(), level=record.levelname)
 
 class TraceRobotPlugin:
     def __init__(self, config):
 
         self.config = config
         self._stack = []
+        self._logger = TraceRobotPythonLogger()
 
     @property
     def current_path(self):
@@ -123,6 +140,7 @@ class TraceRobotPlugin:
         if self._has_test_setup(item):
             self._finish_test_setup(item)
 
+        # Applies to next keyword function called, returns automatically to "kw"
         tracerobot.set_auto_trace_kwtype('setup')
 
     def _finish_test_setup(self, item, call=None):
@@ -153,7 +171,6 @@ class TraceRobotPlugin:
             item.rt_test_teardown_info = None
 
     def _finish_test_envelope(self, item, call=None):
-
         tracerobot.stop_auto_trace()
 
         if self._is_test_started(item):
@@ -169,8 +186,15 @@ class TraceRobotPlugin:
     # Initialization hooks
 
     def pytest_sessionstart(self, session):
-        output_path = self.config.getoption('robot_output')
-        tracerobot.configure(logfile=output_path)
+        # note: this becomes after the root-level suite has been created
+        tracerobot_config = {}
+        for var in ["robot_output", "autotrace_privates", "autotrace_libpaths"]:
+            tracerobot_config[var] = self.config.getoption(var)
+        tracerobot.tracerobot_init(tracerobot_config)
+
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger().addHandler(self._logger)
+
 
     def pytest_sessionfinish(self, session, exitstatus):
         while self._stack:
@@ -210,27 +234,31 @@ class TraceRobotPlugin:
         scope = fixturedef.scope    # 'function', 'class', 'module', 'session'
 
         if HOOK_DEBUG:
-            print("pytest_fixture_setup", fixturedef, request, request.node)
+            # Note: run pytest with -s to see these
+            print("\npytest_fixture_setup", fixturedef, request, request.node)
 
         if scope == 'function':
+            # Function-scope fixtures can be starting a new test case
             item = request.node
 
-            self._start_test_envelope(
-                item, with_setup_and_teardown=True)
-            self._start_test_setup(item, fixturedef)
+            if not self._is_test_started(item):
+                self._start_test_envelope(
+                    item, with_setup_and_teardown=True)
+                self._start_test_setup(item, fixturedef)
 
-            yield
-        else:
-            fixture = tracerobot.start_keyword(
-                name=fixturedef.argname,
-                type="setup"
-            )
+        fixture = tracerobot.start_keyword(
+            name=fixturedef.argname,
+            type="setup"
+        )
 
-            outcome = yield
+        outcome = yield
 
-            result = outcome.get_result()
-            tracerobot.end_keyword(fixture, result)
+        result = outcome.get_result()
+        tracerobot.end_keyword(fixture, result)
 
+
+    #def pytest_fixture_setup(self, fixturedef, request):
+    #    return pytest_fixture_setup_wrap(self, fixturedef, request)
 
     def pytest_runtest_call(self, item):
         pass
@@ -258,7 +286,7 @@ class TraceRobotPlugin:
         #note: setup and teardown are called even if a test has no fixture
 
         if HOOK_DEBUG:
-            print("pytest_runtest_makereport", item, call)
+            print("\npytest_runtest_makereport", item, call)
 
         if call.when == "setup":
             #  finish setup phase (if any), start test body
@@ -289,12 +317,34 @@ class TraceRobotPlugin:
                 self._finish_test_envelope(item, call)
 
 
+    def pytest_assertion_pass(item, lineno, orig, expl):
+
+        if HOOK_DEBUG:
+            print("\n pytest_assertion_pass", lineno, orig, expl)
+
+        assert_kw = tracerobot.start_keyword("assert")
+        tracerobot.log_message(orig)
+        tracerobot.end_keyword(assert_kw)
+
+
 def pytest_addoption(parser):
     group = parser.getgroup('tracerobot')
     group.addoption(
         '--robot-output',
         default='output.xml',
         help='Path to Robot Framework XML output'
+    )
+    group.addoption(
+        '--autotrace-privates',
+        default=False,
+        action='store_const',
+        const=True,
+        help='If set, also auto trace private method.'
+    )
+    group.addoption(
+        '--autotrace-libpaths',
+        nargs="*",
+        help='List of paths for which the autotracer is enabled.'
     )
 
     # TODO: should auto-tracing be configurable on/off?
