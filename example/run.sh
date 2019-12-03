@@ -1,4 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
 
-pytest --capture=no $@
+ARGS=$@
+TESTS=${ARGS:=test*.py}
+
+pytest --capture=no ${TESTS}
 rebot output.xml

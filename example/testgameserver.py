@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from tracerobot.decorators import keyword, KeywordClass
 import requests
 import pytest
