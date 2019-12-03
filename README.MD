@@ -2,42 +2,37 @@
 
 ## What is it?
 
-TraceRobot is a Python-based test execution tracer. It outputs Robot Framework
-compatible trace log (XML) of the instrumented tests. TraceRobot execution
-trace shows which test suites, tests and keywords were run, which parameters
-were used for those, what the keywords returned, and what kind of failures
-there were, if any.
+pytest-tracerobot is a Pytest plugin that records the execution trace of
+test cases and outputs a Robot Framework compatible XML log file.
 
-The generated XML log can be converted into a human-friendly log and report HTML pages
-using 'rebot' tool from Robot Framework.
+The generated XML log file can be converted into a human-friendly HTML log and
+report files using 'rebot' tool from Robot Framework.
 
-pytest-tracerobot is a Pytest plugin that glues the TraceRobot with PyTest
-framework. With this plugin, you get automatic instrumentation of Pytest suites
-(test directories and files) and test cases. Keyword-level instrumentation
-is done using TraceRobot decorator and base classes.
-
-Sounds complicated? Well, not really. See the examples and you will understand!
+Tests do not need to be written differently to be tracerobot compatible.
+Tracerobot understands what pytest is doing and acts accordingly.
 
 ## Current status
 
-Current development status is Alpha / PoC phase.
+Current development status is Beta. It is being tested for production use.
 I'm looking for volunteers to assist in development of TraceRobot and this  
 plugin.
 
 ## Prerequisites
 
-PyTest-TraceRobot needs Python 3, PyPi (pip3) and TraceRobot module.  
+PyTest-TraceRobot needs Python 3, PyPi (pip3) and TraceRobot module (>=0.3.0).
 TraceRobot module has a dependency to Robot Framework.
-PyTest-TraceRobot has been tested with Python 3.5.2 and Robot Framework 3.1.1.
+PyTest-TraceRobot has been tested with Python 3.6.8 and Robot Framework 3.1.1.
 
 ## Installation
 
-First, install the TraceRobot module from
+First, download and install the TraceRobot module from
 https://github.com/markkudegerholmknowit/tracerobot.git
 
 (This is going to be a PyPi package at some point, but we're not there yet).
 
-Extract the pytest-tracerobot tarball or clone it from github.
+Then, download and install the pytest-tracerobot from
+https://github.com/markkudegerholmknowit/pytest-tracerobot.git
+
 In the sources directory, run
 
 sudo -H ./setup.py install
@@ -49,7 +44,7 @@ This should also install the other dependencies if necessary.
 After installing the module, you can run the example code under the "example"
 directory.
 
-The example code comprises of a SUT (Software Under Testing), and a few
+The example code comprises of a SUT (Software Under Test), and a few
 test cases for that. The SUT is a very simple HTTP API stub.
 
 To run the SUT, you will need to have Python "flask" module installed.
@@ -64,7 +59,7 @@ Run the SUT (Software Under testing) in one terminal:
 
 Then, open an another terminal for running the tests:
 `cd example`
-`./run.sh test*.py`
+`./run.sh`
 
 This script runs both the tests and calls 'rebot' tool from Robot framework
 to generate report.html and log.html from the generated output.xml.
@@ -80,10 +75,15 @@ About the sample tests:
 
 ## Writing test suites, test cases and keywords
 
-Based on Robot Framework testing model, TraceRobot inherits the following
-basic concepts:
-  1 Suite: a collection of tests. There can be one or multiple suites per test run,
-    and suites can be nested.
+Basic rule is that you don't need to do any tracerobot specific changes
+to your test code. Just write your tests as you would do normally with
+pytest.
+
+Based on Robot Framework testing model, Pytset-TraceRobot internally
+uses the following concepts:
+
+  1 Suite: a collection of tests. There can be one or multiple suites per
+    test run. Suites can be nested.
     Suites can have setup and teardown related keywords.
     In pytest-tracerobot, suite-level setup/teardown can be implemented using
     one or more class/module/session-scoped fixture functions
@@ -95,17 +95,24 @@ basic concepts:
     (refer to PyTest documentation for more information).
   1 Keyword: basically any Python function used by a test case. Keywords can
     call other keywords.
+  1 Messages: arbitrary log messages can be inserted into log files.
 
-With pytest-tracerobot, the suite and test case level instrumentation happens
-automatically. To instrument the keywords, you will need to:
+Pytest-tracerobot uses the pytest collections and python tracer module to
+automatically map the test execution into the suite/test case/
+keyword level objects and write them into the XML log file.
 
-  - decorate all functions you want to get traced with @keyword
+## Autotracing scope
 
-    OR
+Automatic execution tracing is enabled in the python files within current
+working directory tree. By default, private methods (those starting with an
+underscore) are not logged, but this can be changed with --autotrace-privates
+option to pytest. Test libraries that should be traced can be added with
+--autotrace-libpaths option to pytest.
 
-  - derive your keyword classes from KeywordClass base class. This will
-    automatically instrument all public methods in that class to be keywords.
+## Python log facility
 
+While under a test case, any log message written with python logging facility
+will be written to the XML log file as well.
 
 ## Marks / Tags
 
@@ -114,6 +121,9 @@ In PyTest, each test can be decorated using
 you can select to run only tests with specific mark(s) using "-m MARK"
 command line option (on command line MARK is actually a regexp so this is quite
 flexible).
+
+In new versions of pytest, custom marks should be described in pytest.ini file
+to avoid warnings.
 
 In Robot Framework output, marks are converted to tags.
 

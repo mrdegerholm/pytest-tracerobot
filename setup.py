@@ -3,11 +3,11 @@ from setuptools import setup
 
 setup(
     name="pytest_tracerobot",
-    version="0.2.0",
+    version="0.3.0",
     scripts=["pytest_tracerobot.py"],
     # the following makes a plugin available to pytest
     entry_points={"pytest11": ["name_of_plugin=pytest_tracerobot"]},
     # custom PyPI classifier for pytest plugins
     classifiers=["Framework :: Pytest"],
-    install_requires=["tracerobot >= 0.2.0", "pytest >= 4.3.0"]
+    install_requires=["tracerobot >= 0.3.0", "pytest >= 4.3.0"]
 )
