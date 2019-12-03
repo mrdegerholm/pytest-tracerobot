@@ -82,20 +82,20 @@ pytest.
 Based on Robot Framework testing model, Pytset-TraceRobot internally
 uses the following concepts:
 
-  1 Suite: a collection of tests. There can be one or multiple suites per
-    test run. Suites can be nested.
-    Suites can have setup and teardown related keywords.
-    In pytest-tracerobot, suite-level setup/teardown can be implemented using
-    one or more class/module/session-scoped fixture functions
-    (refer to PyTest documentation for more information).
-  1 Test case: a single test case. Test cases cannot be nested.
-    Test cases can have setup and teardown related keywords.
-    In pytest-tracerobot, test-level setup/teardown can be implemented using
-    one or more function-scoped fixture functions
-    (refer to PyTest documentation for more information).
-  1 Keyword: basically any Python function used by a test case. Keywords can
-    call other keywords.
-  1 Messages: arbitrary log messages can be inserted into log files.
+  1. Suite: a collection of tests. There can be one or multiple suites per
+     test run. Suites can be nested.
+     Suites can have setup and teardown related keywords.
+     In pytest-tracerobot, suite-level setup/teardown can be implemented using
+     one or more class/module/session-scoped fixture functions
+     (refer to PyTest documentation for more information).
+  2. Test case: a single test case. Test cases cannot be nested.
+     Test cases can have setup and teardown related keywords.
+     In pytest-tracerobot, test-level setup/teardown can be implemented using
+     one or more function-scoped fixture functions
+     (refer to PyTest documentation for more information).
+  3. Keyword: basically any Python function used by a test case. Keywords can
+     call other keywords.
+  4. Messages: arbitrary log messages can be inserted into log files.
 
 Pytest-tracerobot uses the pytest collections and python tracer module to
 automatically map the test execution into the suite/test case/
