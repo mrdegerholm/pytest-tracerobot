@@ -3,6 +3,7 @@ import traceback
 import tracerobot
 import logging
 import pytest
+import _pytest
 
 # Set to True to enable trace log of some hook calls to stdout
 HOOK_DEBUG = False
@@ -56,7 +57,6 @@ class TraceRobotPlugin:
             stack_summary = traceback.extract_tb(call.excinfo.tb)
             frames = traceback.format_list(stack_summary)
             msg = frames[-1] + "\n" + call.excinfo.exconly()
-
             return msg
 
         else:
@@ -190,6 +190,10 @@ class TraceRobotPlugin:
         tracerobot_config = {}
         for var in ["robot_output", "autotrace_privates", "autotrace_libpaths"]:
             tracerobot_config[var] = self.config.getoption(var)
+
+        # add _pytest module to list of silenced paths in order to avoid
+        # logging of asserts related helper methods
+        tracerobot_config['autotrace_silentpaths'] = _pytest.__path__
         tracerobot.tracerobot_init(tracerobot_config)
 
         logging.getLogger().setLevel(logging.DEBUG)
@@ -317,13 +321,16 @@ class TraceRobotPlugin:
                 self._finish_test_envelope(item, call)
 
 
-    def pytest_assertion_pass(item, lineno, orig, expl):
+    def pytest_assertion_pass(self, item, lineno, orig, expl):
 
         if HOOK_DEBUG:
-            print("\n pytest_assertion_pass", lineno, orig, expl)
+            print("\npytest_assertion_pass", item.fspath, lineno, orig)
 
-        assert_kw = tracerobot.start_keyword("assert")
-        tracerobot.log_message(orig)
+        path = item.fspath
+        fname = os.path.basename(path)
+        name = fname + ":" + str(lineno) + ": assert"
+        assert_kw = tracerobot.start_keyword(name, args=[orig])
+        tracerobot.log_message(expl)
         tracerobot.end_keyword(assert_kw)
 
 

@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-from tracerobot.decorators import keyword, KeywordClass
 import requests
 import pytest
+import logging
 
-@keyword
-def rlog(msg):
-    print(msg)
-
-
-@keyword
 def get(d, key):
+    """ A helper function to get a key from dict or to return None if not found. """
+
     if key in d:
         return d[key]
     else:
         return None
 
-class GameServerTester(KeywordClass):
+class GameServerTester:
     """ Game Server Acceptance Tests """
 
     TEST_URL = "http://localhost:5000/game"
@@ -26,16 +22,17 @@ class GameServerTester(KeywordClass):
     @staticmethod
     def apicall(url, params, method):
         fun = requests.post if method == "POST" else requests.get
-        r = keyword(fun)(url, params=params)
-        rlog(url + ': http status=%i' % r.status_code)
+        r = fun(url, params=params)
+        logging.info(url + ': http status=%i' % r.status_code)
         if r.status_code == requests.codes.ok:
             j = r.json()
-            rlog('\tresult=%s' % j)
+            logging.info('\tresult=%s' % j)
             return j
         else:
             return None
 
-    class Login(KeywordClass):
+    class Login:
+        """ Login API tester. """
         TEST_USER = "markku"
         TEST_PASS = "3l1t3"
 
@@ -67,7 +64,9 @@ class GameServerTester(KeywordClass):
         def get_last_token(self):
             return self._token
 
-    class GameLobby(KeywordClass):
+    class GameLobby:
+        """ Game lobby API tester. """
+
         def __init__(self, url, login):
             self._url = url
             self._login = login
@@ -141,7 +140,7 @@ def test_empty_creds(gameServerFixture):
 
 
 @pytest.mark.credentials
-def test_valid_creds(gameServerFixture):
+def test_valid_creds_z(gameServerFixture):
     assert gameServerFixture.try_login(user="markku", passw="3l1t3")
 
 
@@ -149,7 +148,6 @@ def test_valid_creds(gameServerFixture):
 def test_valid_creds_wrong_method(gameServerFixture):
     assert not gameServerFixture.try_login(
         user="markku", passw="3l1t3", method='GET')
-
 
 @pytest.mark.lobby
 def test_lobby_register(gameLobbyFixture):
