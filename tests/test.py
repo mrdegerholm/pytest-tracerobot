@@ -1,4 +1,3 @@
-from tracerobot.decorators import keyword, KeywordClass
 import requests
 import pytest
 
@@ -35,6 +34,12 @@ def fixtureWithSetupAndTeardown2():
 @pytest.fixture(scope="module")
 def moduleFixture():
     rlog("module setup")
+    yield
+    rlog("module teardown")
+
+@pytest.fixture(scope="module")
+def moduleFixtureWithSetupError():
+    assert False
     yield
     rlog("module teardown")
 
@@ -94,6 +99,11 @@ def test_module_and_test_fixtures(moduleFixture, fixtureWithSetupAndTeardown1):
 @pytest.mark.failing
 def test_setup_assert(fixtureWithSetupError):
     """ A test that fails in fixture setup phase """
+    rlog("here")
+
+@pytest.mark.failing
+def test_module_setup_assert(moduleFixtureWithSetupError):
+    """ A test that fails in module fixture setup phase """
     rlog("here")
 
 @pytest.mark.failing
