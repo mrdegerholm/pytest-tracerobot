@@ -2,6 +2,7 @@ import os
 import traceback
 import tracerobot
 import logging
+from contextlib import AbstractContextManager, contextmanager
 import pytest
 import _pytest
 
@@ -31,6 +32,27 @@ class TraceRobotPythonLogger(logging.Handler):
 
     def handle(self, record):
         tracerobot.log_message(record.getMessage(), level=record.levelname)
+
+
+class KeywordCtx(AbstractContextManager):
+    """ A keyword context class that makes sure that started keywords
+        get closed. """
+
+    def __init__(self, name, kwtype="kw", args=None):
+        super(AbstractContextManager, self).__init__()
+        self._name = name
+        self._kw = tracerobot.start_keyword(name, type=kwtype, args=args)
+        self._error_msg = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        tracerobot.end_keyword(self._kw, error_msg=self._error_msg)
+
+    def set_error_msg(self, error_msg):
+        self._error_msg = error_msg
+
 
 class TraceRobotPlugin:
     def __init__(self, config):
@@ -230,6 +252,14 @@ class TraceRobotPlugin:
 
         assert self.current_path == target
 
+
+    @contextmanager
+    def autotracer_running(self, kwtype="kw"):
+        tracerobot.start_auto_trace()
+        tracerobot.set_auto_trace_kwtype(kwtype)
+        yield
+        tracerobot.stop_auto_trace()
+
     # Reporting hooks
 
     @pytest.hookimpl(hookwrapper=True)
@@ -242,7 +272,8 @@ class TraceRobotPlugin:
             print("\npytest_fixture_setup", fixturedef, request, request.node)
 
         if scope == 'function':
-            # Function-scope fixtures can be starting a new test case
+            # Function-scope fixtures typically mark start of a new test case
+            # (except when there are multiple fixtures)
             item = request.node
 
             if not self._is_test_started(item):
@@ -250,19 +281,14 @@ class TraceRobotPlugin:
                     item, with_setup_and_teardown=True)
                 self._start_test_setup(item, fixturedef)
 
-        fixture = tracerobot.start_keyword(
-            name=fixturedef.argname,
-            type="setup"
-        )
+            yield
+        else:
+            # Module-scope fixtures may get run at any point of the test
+            # execution. No need to start test envelope for them, but we
+            # want to get them logged.
+            with self.autotracer_running("setup"):
+                yield
 
-        outcome = yield
-
-        result = outcome.get_result()
-        tracerobot.end_keyword(fixture, result)
-
-
-    #def pytest_fixture_setup(self, fixturedef, request):
-    #    return pytest_fixture_setup_wrap(self, fixturedef, request)
 
     def pytest_runtest_call(self, item):
         pass
@@ -303,6 +329,8 @@ class TraceRobotPlugin:
                     self._finish_test_envelope(item, call)
             else:
                 self._start_test_envelope(item)
+                if call.excinfo:
+                    self._finish_test_envelope(item, call)
 
         # pytest_runtest_call(item) gets called between "setup" and "call"
 
@@ -329,9 +357,8 @@ class TraceRobotPlugin:
         path = item.fspath
         fname = os.path.basename(path)
         name = fname + ":" + str(lineno) + ": assert"
-        assert_kw = tracerobot.start_keyword(name, args=[orig])
-        tracerobot.log_message(expl)
-        tracerobot.end_keyword(assert_kw)
+        with KeywordCtx(name, args=[orig]) as assert_kw:
+            tracerobot.log_message(expl)
 
 
 def pytest_addoption(parser):
