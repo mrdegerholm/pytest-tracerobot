@@ -19,19 +19,23 @@ plugin.
 
 ## Prerequisites
 
-PyTest-TraceRobot needs Python 3, PyPi (pip3) and TraceRobot module (>=0.3.0).
+PyTest-TraceRobot needs Python 3, PyPi (pip3) and TraceRobot module (>=0.3.1).
 TraceRobot module has a dependency to Robot Framework.
 PyTest-TraceRobot has been tested with Python 3.6.8 and Robot Framework 3.1.1.
 
 ## Installation
 
 First, download and install the TraceRobot module from
-https://github.com/markkudegerholmknowit/tracerobot.git
+https://github.com/mrdegerholm/tracerobot.git
+
+In the sources directory, run
+
+sudo -H ./setup.py install
 
 (This is going to be a PyPi package at some point, but we're not there yet).
 
 Then, download and install the pytest-tracerobot from
-https://github.com/markkudegerholmknowit/pytest-tracerobot.git
+https://github.com/mrdegerholm/pytest-tracerobot.git
 
 In the sources directory, run
 
@@ -109,6 +113,18 @@ underscore) are not logged, but this can be changed with --autotrace-privates
 option to pytest. Test libraries that should be traced can be added with
 --autotrace-libpaths option to pytest.
 
+## Logging of assert statements
+
+In order to get all the asserts logged, you must have the following contents in
+your pytest.ini file:
+
+    [pytest]
+    enable_assertion_pass_hook=true
+
+Please note: if you already ran some tests without that setting, you may need
+to remove the .pyc files from your test project. This is because pytest will
+need to instrument the test code differently with this setting enabled.
+
 ## Python log facility
 
 While under a test case, any log message written with python logging facility
@@ -122,7 +138,7 @@ you can select to run only tests with specific mark(s) using "-m MARK"
 command line option (on command line MARK is actually a regexp so this is quite
 flexible).
 
-In new versions of pytest, custom marks should be described in pytest.ini file
+In newer versions of pytest, custom marks should be described in pytest.ini file
 to avoid warnings.
 
 In Robot Framework output, marks are converted to tags.
